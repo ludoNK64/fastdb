@@ -1,3 +1,4 @@
 *.odt
 *.png
 *.xmi
+__pycache__/

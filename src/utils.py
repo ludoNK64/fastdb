@@ -30,7 +30,7 @@ class SQL_Checker:
 
     def sql_to_bytes(self) -> bytes:
         """Returns the underlying query statement in bytes."""
-        return b"%s" % self.query
+        return bytes(self.query, encoding="utf-8")
 
 # Useful functions
 

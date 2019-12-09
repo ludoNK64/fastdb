@@ -16,7 +16,7 @@ class TestServer(unittest.TestCase):
         This also tests Logger class at the same time because server
         uses it.
         """
-        _server = server.FDB_Server('localhost', 5100)
+        _server = server.FDB_Server(server.DEFAULT_HOST, server.DEFAULT_PORT)
         # 1. Database operations
         # Connection to database
         if os.path.exists(server.SERVER_DATABASE):
@@ -44,7 +44,7 @@ class TestServer(unittest.TestCase):
         self.assertTrue(_server.logger.opened)
 
         # Testing writing
-        _server.log("hello")
+        _server.log("hello", False)
         # Close file
         _server.logger.close_file()
         self.assertFalse(_server.logger.opened)

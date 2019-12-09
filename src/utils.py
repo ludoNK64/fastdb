@@ -46,11 +46,17 @@ class Logger:
 
     @property
     def opened(self):
-        return self._file and self._file.opened 
+        return self._file and not self._file.closed 
 
     def open_file(self, mode, encoding_="utf-8"):
+        modes = ('r', 'a', 'w')
+        if not mode in modes:
+            raise ValueError("Invalid mode. Expected %s, got %s" %
+                (str(modes), str(mode)))
         if not self._file:
             self._file = open(self.filename, mode, encoding=encoding_)
+        else:
+            raise RuntimeError("Logger file already opened")
 
     def close_file(self):
         if self._file:

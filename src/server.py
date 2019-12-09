@@ -1,5 +1,6 @@
 """SGBD Server
 """
+#!/usr/bin/python3 
 
 import sqlite3
 import socket 
@@ -8,6 +9,8 @@ import time
 import utils
 # from session import ClientSession 
 
+DEFAULT_HOST = 'localhost'
+DEFAULT_PORT = 5100
 SERVER_DATABASE = 'fastdb_info.db'
 LOG_FILE = 'log.txt'
 
@@ -29,6 +32,18 @@ class FDB_Server:
     def port(self):
         return self._port 
 
+    @property
+    def logger(self):
+        return self._logger
+
+    @property
+    def socket(self):
+        return self._socket
+
+    @property
+    def db_conn(self):
+        return self._db_conn 
+
     def is_user_exist(self, username:str) -> bool:
         """Checks if the given username is allowed to connect server."""
         if self._db_conn:
@@ -40,7 +55,7 @@ class FDB_Server:
         return False
 
     def is_database_exist(self, dbname:str) -> bool:
-        """Checks if the selected database exists."""
+        """Checks if the given database name exists."""
         if self._db_conn:
             with self._db_conn:
                 cursor = self._db_conn.cursor()
@@ -61,29 +76,31 @@ class FDB_Server:
     def delete_database_entry(self, dbname:str):
         pass 
 
-    def create_database(self):
-        """Create server database info if not already exists."""
+    def create_tables(self):
+        """Create server tables if not already exist."""
         if not self._db_conn:
             self.connect_to_database()
 
         with self._db_conn:
-            sql = """
-                CREATE TABLE %(users)s (
-                    id INT NOT NULL AUTOINCREMENT PRIMARY KEY, 
-                    username VARCHAR(50) NOT NULL UNIQUE
-                );
-                CREATE TABLE %(databases)s (
-                    id INT NOT NULL AUTOICREMENT PRIMARY KEY,
-                    dbname VARCHAR(50) NOT NULL UNIQUE
-                );""" % self.tables 
-            self._db_conn.execute(sql)
+            sql = ("""
+                CREATE TABLE %s (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
+                    `username` VARCHAR(50) NOT NULL UNIQUE
+                );""" % self.tables['users'], 
+                """
+                CREATE TABLE %s (
+                    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    `dbname` VARCHAR(50) NOT NULL UNIQUE
+                );""" % self.tables['databases'])
+            self._db_conn.execute(sql[0])
+            self._db_conn.execute(sql[1])
             self._db_conn.commit()
 
     def connect_to_database(self):
         """Connect to the server database information."""
         self._db_conn = sqlite3.connect(SERVER_DATABASE) 
 
-    def close_database_conn(self):
+    def close_db_connection(self):
         """Close connection to the server database."""
         if self._db_conn:
             self._db_conn.close()
@@ -100,12 +117,13 @@ class FDB_Server:
 
     def log(self, msg:str, output=True):
         """Write status in the log file and stdout if output=True."""
-        self._logger.write_line(msg)
+        self.logger.write_line(msg)
         if output:
             print(msg) 
 
     def __del__(self):
-        self.close_database_conn()
+        self.logger.close_file()
+        self.close_db_connection()
         self.close_socket()
 
     def run(self):
@@ -113,7 +131,7 @@ class FDB_Server:
         try:
             self.create_socket()
             self.connect_to_database()
-            self._logger.open_file("a")
+            self.logger.open_file("a")
 
             now = datetime.datetime.now()
             self.log("\n     ======== %s ========\n" % now.strftime('%d-%m-%Y'))
@@ -133,8 +151,8 @@ class FDB_Server:
         except (sqlite3.Error, socket.error) as e:
             print(e)
         finally:
-            self._logger.close_file()
-            self.close_database_conn()
+            self.logger.close_file()
+            self.close_db_connection()
             self.close_socket()
 
 if __name__ == '__main__':

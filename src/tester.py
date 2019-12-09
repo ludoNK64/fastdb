@@ -52,7 +52,7 @@ def main(directory=DEFAULT_TESTS_FOLDER):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.usage = 'python3 tester.py [--dir=FOLDER]'
+    parser.usage = 'python3 tester.py --dir=FOLDER'
     parser.add_argument('-d', '--dir', dest='directory', required=True)
     args = parser.parse_args(sys.argv[1:])
     main(args.directory)

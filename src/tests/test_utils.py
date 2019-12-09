@@ -21,7 +21,7 @@ class TestSQL_Checker(unittest.TestCase):
             'Valid SQL Statement')
         # test : sql_to_bytes
         self.assertEqual(checker.sql_to_bytes(), f"{sql}".encode("utf-8"), 
-            'Two bytes values are equal')
+            'Two bytes values are not equal')
 
 
 class TestLogger(unittest.TestCase):

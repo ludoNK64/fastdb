@@ -9,6 +9,7 @@ This module contains:
 
 import sqlite3
 import argparse
+import re 
 
 class SQL_Checker:
     """This is used to check if an SQL query is valid."""
@@ -32,18 +33,63 @@ class SQL_Checker:
         """Returns the underlying query statement in bytes."""
         return bytes(self.query, encoding="utf-8")
 
+
+class Logger:
+    """Used to output state/status in the file."""
+    def __init__(self, filename:str):
+        self._file = None 
+        self._filename = filename
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @property
+    def opened(self):
+        return self._file and self._file.opened 
+
+    def open_file(self, mode, encoding_="utf-8"):
+        if not self._file:
+            self._file = open(self.filename, mode, encoding=encoding_)
+
+    def close_file(self):
+        if self._file:
+            self._file.close()
+            self._file = None
+
+    def write_line(self, line:str):
+        if self._file:
+            self._file.write(line)
+
+    def __del__(self):
+        self.close_file()
+
+
 # Useful functions
+
+def is_valid_ip(ip:str) -> bool:
+    """Check if the given IP address is in valid format."""
+    return re.fullmatch(r'\d{1,3}?(\.\d{1,3}?){3}', ip) is not None
 
 def parse_client_args(args):
     """Parse client command line arguments.
     
-    Returns given address and port as a tuple.
+    Returns given address, port and user.
     """
-    pass 
+    parser = argparse.ArgumentParser()
+    parser.usage = 'server.py --addr=ADDRESS --port=PORT --user=USERNAME'
+    parser.add_argument('-a', '--addr', dest="host", required=True, type=str)
+    parser.add_argument('-p', '--port', dest="port", required=True, type=int)
+    parser.add_argument('-u', '--user', dest="user", required=True, type=str)
+    return parser.parse_args()
 
 def parse_server_args(args):
     """Parse server command line arguments.
 
-    Returns given address and port as a tuple.
+    Returns given address and port.
     """
-    pass 
+    parser = argparse.ArgumentParser()
+    parser.usage = 'server.py --addr=ADDRESS --port=PORT'
+    parser.add_argument('-a', '--addr', dest="host", required=True, type=str)
+    parser.add_argument('-p', '--port', dest="port", required=True, type=int)
+    return parser.parse_args() 

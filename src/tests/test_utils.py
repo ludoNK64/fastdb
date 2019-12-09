@@ -22,3 +22,25 @@ class TestSQL_Checker(unittest.TestCase):
         # test : sql_to_bytes
         self.assertEqual(checker.sql_to_bytes(), f"{sql}".encode("utf-8"), 
             'Two bytes values are equal')
+
+
+class TestLogger(unittest.TestCase):
+    def test_logger(self):
+        message = "hello everyone"
+        # Creating instance
+        logger = utils.Logger('test-file')
+        # Testing opening operation
+        logger.open_file('w')
+        self.assertTrue(logger.opened)
+        # Testing writing operation
+        logger.write_line(message)
+        # Testing closing operation
+        logger.close_file()
+        self.assertFalse(logger.opened)
+
+        # More...Reading written line
+        logger.open_file('r')
+        f = logger._file 
+        self.assertEqual(f.read(), message)
+        logger.close_file()
+        self.assertFalse(logger.opened)

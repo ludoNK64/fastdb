@@ -42,11 +42,12 @@ class ClientSession(threading.Thread):
             # 1. client's connection (login)
             data = self.conn.recv(1024)
             data = data.decode(encoding="utf-8")
-            if self.server.is_user_exist(*data.split(DATA_SEPARATOR)):
-                self.conn.send(ACCESS_GRANTED)
-                self._client_connected = True
-            else:
-                self.conn.send(ACCESS_DENIED)
+            if data:
+                if self.server.is_user_exist(*data.split(DATA_SEPARATOR)):
+                    self.conn.send(ACCESS_GRANTED)
+                    self._client_connected = True
+                else:
+                    self.conn.send(ACCESS_DENIED)
             # 2. main activity
             if self._client_connected:
                 table = utils.TextTable()
@@ -55,16 +56,17 @@ class ClientSession(threading.Thread):
                     try:
                         sql = self.conn.recv(1024)
                         sql = sql.decode(encoding="utf-8")
-                        start = time.time()
-                        result = self.server.db_conn.execute(sql)
-                        end = time.time()
-                        elapsed_time = end - start
-                        message = "\nQuery done in %.2fs\n" % elapsed_time
-                        if _is_select_statement(sql):
-                            table.clear()
-                            table.header(_extract_fields(sql))
-                            table.add_rows(result)
-                            message = f"\n{str(table)} {message}"
+                        if sql:
+                            start = time.time()
+                            result = self.server.db_conn.execute(sql)
+                            end = time.time()
+                            elapsed_time = end - start
+                            message = "\nQuery done in %.2fs\n" % elapsed_time
+                            if _is_select_statement(sql):
+                                table.clear()
+                                table.header(_extract_fields(sql))
+                                table.add_rows(result)
+                                message = f"\n{str(table)} {message}"
                     except sqlite3.error as e:
                         message = e
                     self.conn.sendall(message.encode("utf-8"))

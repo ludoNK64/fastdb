@@ -5,14 +5,20 @@
 
 import socket 
 import getpass 
+import datetime 
 
 import utils
 
+
 CLIENT_PROMPT = "fastdb> "
+CLIENT_APP_NAME = "FastDB"
+CLIENT_APP_VERSION = "1.0.1"
 ERRORS = {
     'invalid-statement': "Invalid SQL syntax at line 1"
 }
 DATA_SEPARATOR = '$'
+HELP_FILE = 'help'
+
 
 class LoginError(Exception):
     pass
@@ -90,13 +96,24 @@ class FDB_Client:
     @classmethod
     def welcome(cls):
         """Show welcome message."""
-        print("\nWelcome ...\n") # login date and time, app version and commands
+        now = datetime.datetime.now()
+        print("\n\t~ Welcome ~\t\n")
+        print("%s client application, version %s" % (CLIENT_APP_NAME,
+            CLIENT_APP_VERSION))
+        print("Connect on %s at %s\n" % (now.strftime("%a %d %b %Y"), 
+            now.strftime("%H:%M:%S")))
+        print("For more information, type 'help'. 'exit' or 'quit' to quit.\n")
 
     @classmethod
     def help(cls):
         """Show client help"""
         print("\n********************* HELP *********************\n")
         print("This is the help you ask for. Read this carefully!")
+        try:
+            with open(HELP_FILE, 'r') as _file:
+                print(_file.read())
+        except FileNotFoundError:
+            pass
         print("\n************************************************\n")
 
     def __del__(self):

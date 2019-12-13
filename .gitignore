@@ -2,3 +2,5 @@
 *.png
 *.xmi
 __pycache__/
+*.db
+*.txt

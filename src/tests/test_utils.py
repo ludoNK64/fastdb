@@ -2,11 +2,13 @@
 """
 
 import unittest 
+import os
+
 import utils
 
-def get_tests():
+def get_tests() -> tuple:
     """Returns all test classes."""
-    return TestSQL_Checker,
+    return TestSQL_Checker, TestLogger
 
 class TestSQL_Checker(unittest.TestCase):
     def _create_checker(self):
@@ -21,4 +23,30 @@ class TestSQL_Checker(unittest.TestCase):
             'Valid SQL Statement')
         # test : sql_to_bytes
         self.assertEqual(checker.sql_to_bytes(), f"{sql}".encode("utf-8"), 
-            'Two bytes values are equal')
+            'Two bytes values are not equal')
+
+
+class TestLogger(unittest.TestCase):
+    def test_logger(self):
+        message = "hello everyone"
+        test_file = 'test-file.test'
+        # Creating instance
+        logger = utils.Logger(test_file)
+        # Testing opening operation
+        logger.open_file('w')
+        self.assertTrue(logger.opened)
+        # Testing writing operation
+        logger.write_line(message)
+        # Testing closing operation
+        logger.close_file()
+        self.assertFalse(logger.opened)
+
+        # More...Reading written line
+        logger.open_file('r')
+        f = logger._file 
+        self.assertEqual(f.read(), message)
+        logger.close_file()
+        self.assertFalse(logger.opened)
+
+        # Remove created file
+        os.remove(os.path.realpath(test_file))

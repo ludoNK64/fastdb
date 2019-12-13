@@ -7,13 +7,16 @@ import sqlite3
 import socket 
 import datetime 
 import time 
+import hashlib
+
 import utils
-# from session import ClientSession 
+from session import ClientSession 
 
 DEFAULT_HOST = 'localhost'
 DEFAULT_PORT = 5100
 SERVER_DATABASE = 'fastdb_info.db'
 LOG_FILE = 'log.txt'
+
 
 class FDB_Server:
     def __init__(self, host:str, port:int):
@@ -45,13 +48,14 @@ class FDB_Server:
     def db_conn(self):
         return self._db_conn 
 
-    def is_user_exist(self, username:str) -> bool:
+    def is_user_exist(self, username:str, password:str) -> bool:
         """Checks if the given username is allowed to connect server."""
         if self._db_conn:
             with self._db_conn:
                 cursor = self._db_conn.cursor()
-                cursor.execute('SELECT username FROM %s WHERE username=?' % 
-                    self.tables['users'], (username,))
+                cursor.execute("""SELECT * FROM %s WHERE username=? AND
+                    password=?""" % self.tables['users'], 
+                    (username, utils.hash_password('sha512', password)))
                 return cursor.fetchone() is not None 
         return False
 
@@ -65,7 +69,7 @@ class FDB_Server:
                 return cursor.fetchone() is not None 
         return False 
 
-    def insert_new_user(self, username:str):
+    def insert_new_user(self, username:str, password:str):
         pass
 
     def delete_user(self, username:str):
@@ -86,7 +90,8 @@ class FDB_Server:
             sql = ("""
                 CREATE TABLE %s (
                     `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 
-                    `username` VARCHAR(50) NOT NULL UNIQUE
+                    `username` VARCHAR(50) NOT NULL UNIQUE,
+                    `password` VARCHAR(255) NOT NULL
                 );""" % self.tables['users'], 
                 """
                 CREATE TABLE %s (
@@ -99,7 +104,7 @@ class FDB_Server:
 
     def connect_to_database(self):
         """Connect to the server database information."""
-        self._db_conn = sqlite3.connect(SERVER_DATABASE) 
+        self._db_conn = sqlite3.connect(SERVER_DATABASE, check_same_thread=False) 
 
     def close_db_connection(self):
         """Close connection to the server database."""
@@ -144,8 +149,8 @@ class FDB_Server:
                 self._nb_clients += 1
                 self.log("[%s] New Client connected at %s\n" % 
                     (time.strftime('%H:%M:%S'), str(address)))
-                # session = ClientSession(conn, self)
-                # session.start_session()
+                session = ClientSession(self, conn)
+                session.start()
         except KeyboardInterrupt:
             self.log("Total today clients: %d\n" % self._nb_clients)
             self.log("Shutting down server...\n")

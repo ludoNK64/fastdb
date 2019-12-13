@@ -77,6 +77,13 @@ def is_valid_ip(ip:str) -> bool:
     """Check if the given IP address is in valid format."""
     return re.fullmatch(r'\d{1,3}?(\.\d{1,3}?){3}', ip) is not None
 
+def hash_password(algo:str, data:str):
+    """Hash a password with the given algorithm name."""
+    if algo in {'sha1', 'sha224', 'sha256', 'sha384', 'sha512'}:
+        return hashlib.new(algo, bytes(data, encoding="utf-8")).hexdigest()
+    else:
+        return None
+
 def parse_client_args(args):
     """Parse client command line arguments.
     

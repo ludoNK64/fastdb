@@ -6,7 +6,7 @@ import os
 
 import server
 
-def get_tests():
+def get_tests() -> tuple:
     return TestServer,
 
 class TestServer(unittest.TestCase):

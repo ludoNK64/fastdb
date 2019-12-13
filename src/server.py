@@ -1,6 +1,7 @@
+#!/usr/bin/python3
+
 """SGBD Server
 """
-#!/usr/bin/python3 
 
 import sqlite3
 import socket 
@@ -134,7 +135,7 @@ class FDB_Server:
             self.logger.open_file("a")
 
             now = datetime.datetime.now()
-            self.log("\n     ======== %s ========\n" % now.strftime('%d-%m-%Y'))
+            self.log("     ======== %s ========\n" % now.strftime('%d-%m-%Y'))
             self.log("[%s] Server started successfully\n" % now.strftime('%H:%M:%S'))
 
             while True:

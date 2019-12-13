@@ -2,11 +2,13 @@
 """
 
 import unittest 
+import os
+
 import utils
 
-def get_tests():
+def get_tests() -> tuple:
     """Returns all test classes."""
-    return TestSQL_Checker,
+    return TestSQL_Checker, TestLogger
 
 class TestSQL_Checker(unittest.TestCase):
     def _create_checker(self):
@@ -27,8 +29,9 @@ class TestSQL_Checker(unittest.TestCase):
 class TestLogger(unittest.TestCase):
     def test_logger(self):
         message = "hello everyone"
+        test_file = 'test-file.test'
         # Creating instance
-        logger = utils.Logger('test-file')
+        logger = utils.Logger(test_file)
         # Testing opening operation
         logger.open_file('w')
         self.assertTrue(logger.opened)
@@ -44,3 +47,6 @@ class TestLogger(unittest.TestCase):
         self.assertEqual(f.read(), message)
         logger.close_file()
         self.assertFalse(logger.opened)
+
+        # Remove created file
+        os.remove(os.path.realpath(test_file))

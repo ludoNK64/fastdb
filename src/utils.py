@@ -3,6 +3,9 @@
 This module contains:
     -> SQL_Checker (class) : used to check if a given SQL statement 
                              is valid.
+    -> Logger(class)       : output status 
+    -> is_valid_ip         : check if a given IP address is valid
+    -> hash_password       : hash a password 
     -> parse_client_args   : parse command line client arguments
     -> parse_server_args   : parse command line server arguments
 """

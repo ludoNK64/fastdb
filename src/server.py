@@ -7,7 +7,6 @@ import sqlite3
 import socket 
 import datetime 
 import time 
-import hashlib
 
 import utils
 from session import ClientSession 

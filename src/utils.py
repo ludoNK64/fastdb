@@ -9,6 +9,7 @@ This module contains:
 
 import sqlite3
 import argparse
+import hashlib 
 import re 
 
 class SQL_Checker:

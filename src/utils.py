@@ -75,6 +75,48 @@ class Logger:
         self.close_file()
 
 
+class TextTable:
+    """Represent data as a table."""
+    def __init__(self):
+        self._array = []
+
+    def clear(self):
+        """Clear the underlying array."""
+        self._array.clear()
+
+    def header(self, head:list):
+        """Sets the table header."""
+        if self._array:
+            self._array.insert(0, head)
+        else:
+            self._array.append(head)
+
+    def add_row(self, row:list):
+        """Add row to the underlying array."""
+        self._array.append(row)
+
+    def add_rows(self, rows:list):
+        """Add multiple rows at the same time."""
+        for row in rows: 
+            self.add_row(row)
+
+    def print(self):
+        """Print the result."""
+        print(self._format())
+
+    def __str__(self):
+        return self._format()
+
+    def _format(self) -> str:
+        """Format the array to display it properly."""
+        def get_fields_size() -> list:
+            return []
+
+        result = ""
+        fields_size = get_fields_size()
+        return result
+
+
 # Useful functions
 
 def is_valid_ip(ip:str) -> bool:

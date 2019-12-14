@@ -3,7 +3,8 @@
 This module contains:
     -> SQL_Checker (class) : used to check if a given SQL statement 
                              is valid.
-    -> Logger(class)       : output status 
+    -> Logger (class)      : output status 
+    -> TextTable (class)   : output data into a table
     -> is_valid_ip         : check if a given IP address is valid
     -> hash_password       : hash a password 
     -> parse_client_args   : parse command line client arguments
@@ -91,9 +92,13 @@ class TextTable:
         else:
             self._array.append(head)
 
-    def add_row(self, row:list):
+    def add_row(self, row):
         """Add row to the underlying array."""
-        self._array.append(row)
+        if not isinstance(row, (list, tuple)):
+            return 
+        if self._array and len(row) != len(self._array[0]):
+            return 
+        self._array.append(list(row))
 
     def add_rows(self, rows:list):
         """Add multiple rows at the same time."""
@@ -110,10 +115,32 @@ class TextTable:
     def _format(self) -> str:
         """Format the array to display it properly."""
         def get_fields_size() -> list:
-            return []
+            """Compute maximum string length for each column."""
+            if not self._array:
+                return []
+            sub_arr_length = len(self._array[0])
+            sizes = [0] * sub_arr_length
+            for i in range(len(self._array)):
+                for j in range(sub_arr_length):
+                    sizes[j] = max(sizes[j], len(str(self._array[i][j])))
+            return sizes
 
         result = ""
-        fields_size = get_fields_size()
+        sizes = get_fields_size()
+        sizes_len = len(sizes)
+        if sizes:
+            line = "\n+"
+            for i in range(len(sizes)):
+                line += ('-' * (sizes[i] + 2)) + "+"
+            result += line 
+            for i in range(len(self._array)):
+                    result += "\n| "
+                    for j in range(sizes_len):
+                        elt = str(self._array[i][j])
+                        elt += " " * (sizes[j] - len(elt))
+                        self._array[i][j] = elt 
+                    result += " | ".join([elt for elt in self._array[i]])
+                    result += " |" + line 
         return result
 
 

@@ -34,10 +34,10 @@ class FDB_Client:
         self.conn = None 
         self.checker = utils.SQL_Checker() 
 
-    def send_request(self, msg:bytes):
-        """Send the SQL statement to the server."""
+    def send_data(self, data:bytes):
+        """Send the data to the server."""
         if self.conn:
-            self.conn.sendall(msg)
+            self.conn.sendall(data)
 
     def print_results(self):
         """Wait and print incoming data."""
@@ -60,7 +60,7 @@ class FDB_Client:
         """Manages user's login."""
         password = getpass.getpass(prompt="Enter password: ")
         data = bytes(self.username + DATA_SEPARATOR + password, 'utf-8')
-        self.send_request(data)
+        self.send_data(data)
         data = self.conn.recv(1024)
         if data.decode(encoding="utf-8") != 'ok':
             raise LoginError("Invalid username or password!")
@@ -86,10 +86,11 @@ class FDB_Client:
                 else:
                     self.checker.update(entry)
                     if self.checker.is_valid_statement():
-                        self.send_request(self.checker.sql_to_bytes())
+                        self.send_data(self.checker.sql_to_bytes())
                         self.print_results()
                     else:
                         print(ERRORS['invalid-statement'])
+            print("\nBye\n")
         finally:
             self.close_connection()
 
@@ -107,14 +108,14 @@ class FDB_Client:
     @classmethod
     def help(cls):
         """Show client help"""
-        print("\n********************* HELP *********************\n")
+        print("\n********************* HELP **********************\n")
         print("This is the help you ask for. Read this carefully!")
         try:
             with open(HELP_FILE, 'r') as _file:
                 print(_file.read())
         except FileNotFoundError:
             pass
-        print("\n************************************************\n")
+        print("\n*************************************************\n")
 
     def __del__(self):
         self.close_connection()

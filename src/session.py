@@ -13,14 +13,15 @@ DATA_SEPARATOR = '$'
 ACCESS_GRANTED = b'ok'
 ACCESS_DENIED  = b'access denied'
 
-select_regex = re.compile(
-    r"^select (\* | (?P<field>\w+,\s?)*?)?? (\w+) from \w+ .+?;$", 
-    re.IGNORECASE | re.VERBOSE | re.DOTALL)
+# select_regex = re.compile(
+#     r"^select (\* | (?P<field>\w+,\s?)*?)?? (\w+) from \w+ .+?;$", 
+#     re.IGNORECASE | re.VERBOSE | re.DOTALL)
+select_regex = re.compile(r"^select", re.IGNORECASE | re.VERBOSE)
 
 
 def _is_select_statement(sql:str) -> bool:
     """Check if the SQL command is a SELECT statement."""
-    select_regex.fullmatch(sql) is not None
+    return select_regex.search(sql) is not None
 
 def _extract_fields(sql:str) -> list:
     """Extracts fields of a SELECT SQL statement."""
@@ -57,17 +58,30 @@ class ClientSession(threading.Thread):
                         sql = self.conn.recv(1024)
                         sql = sql.decode(encoding="utf-8")
                         if sql:
+                            cursor = self.server.db_conn.cursor()
                             start = time.time()
-                            result = self.server.db_conn.execute(sql)
+                            cursor.execute(sql)
                             end = time.time()
                             elapsed_time = end - start
-                            message = "\nQuery done in %.2fs\n" % elapsed_time
+                            time_passed = "(%.3f sec)" % elapsed_time
                             if _is_select_statement(sql):
                                 table.clear()
-                                table.header(_extract_fields(sql))
-                                table.add_rows(result)
-                                message = f"\n{str(table)} {message}"
-                    except sqlite3.error as e:
-                        message = e
-                    self.conn.sendall(message.encode("utf-8"))
+                                results = cursor.fetchall()
+                                # table.header(_extract_fields(sql))
+                                if results:
+                                    table.add_rows(results)
+                                    message = "%s\n %d rows in set %s\n" % (
+                                        str(table), len(results), time_passed)
+                                else:
+                                    message = f"\nEmpty set {time_passed}\n"
+                            else:
+                                self.server.db_conn.commit()
+                                message = "\nQuery done %s\n" % time_passed
+                    except sqlite3.Error as e:
+                        message = f"\nERROR: {str(e)}\n"
+                        self.server.db_conn.rollback()
+                    try:
+                        self.conn.sendall(message.encode("utf-8"))
+                    except BrokenPipeError:
+                        break 
             self.conn.close()

@@ -3,12 +3,17 @@
 This module contains:
     -> SQL_Checker (class) : used to check if a given SQL statement 
                              is valid.
+    -> Logger (class)      : output status 
+    -> TextTable (class)   : output data into a table
+    -> is_valid_ip         : check if a given IP address is valid
+    -> hash_password       : hash a password 
     -> parse_client_args   : parse command line client arguments
     -> parse_server_args   : parse command line server arguments
 """
 
 import sqlite3
 import argparse
+import hashlib 
 import re 
 
 class SQL_Checker:
@@ -71,13 +76,88 @@ class Logger:
         self.close_file()
 
 
+class TextTable:
+    """Represent data as a table."""
+    def __init__(self):
+        self._array = []
+
+    def clear(self):
+        """Clear the underlying array."""
+        self._array.clear()
+
+    def header(self, head:list):
+        """Sets the table header."""
+        if self._array:
+            self._array.insert(0, head)
+        else:
+            self._array.append(head)
+
+    def add_row(self, row):
+        """Add row to the underlying array."""
+        if not isinstance(row, (list, tuple)):
+            return 
+        if self._array and len(row) != len(self._array[0]):
+            return 
+        self._array.append(list(row))
+
+    def add_rows(self, rows:list):
+        """Add multiple rows at the same time."""
+        for row in rows: 
+            self.add_row(row)
+
+    def print(self):
+        """Print the result."""
+        print(self._format())
+
+    def __str__(self):
+        return self._format()
+
+    def _format(self) -> str:
+        """Format the array to display it properly."""
+        def get_fields_size() -> list:
+            """Compute maximum string length for each column."""
+            if not self._array:
+                return []
+            sub_arr_length = len(self._array[0])
+            sizes = [0] * sub_arr_length
+            for i in range(len(self._array)):
+                for j in range(sub_arr_length):
+                    sizes[j] = max(sizes[j], len(str(self._array[i][j])))
+            return sizes
+
+        result = ""
+        sizes = get_fields_size()
+        sizes_len = len(sizes)
+        if sizes:
+            line = "\n+"
+            for i in range(sizes_len):
+                line += ('-' * (sizes[i] + 2)) + "+"
+            result += line 
+            for i in range(len(self._array)):
+                    result += "\n| "
+                    for j in range(sizes_len):
+                        elt = str(self._array[i][j])
+                        elt += " " * (sizes[j] - len(elt))
+                        self._array[i][j] = elt 
+                    result += " | ".join([elt for elt in self._array[i]])
+                    result += " |" + line 
+        return result
+
+
 # Useful functions
 
 def is_valid_ip(ip:str) -> bool:
-    """Check if the given IP address is in valid format."""
+    """Check if the given IP address is valid."""
     return re.fullmatch(r'\d{1,3}?(\.\d{1,3}?){3}', ip) is not None
 
-def parse_client_args(args):
+def hash_password(algo:str, data:str):
+    """Hash a password with the given algorithm name."""
+    if algo in {'sha1', 'sha224', 'sha256', 'sha384', 'sha512'}:
+        return hashlib.new(algo, bytes(data, encoding="utf-8")).hexdigest()
+    else:
+        return None
+
+def parse_client_args():
     """Parse client command line arguments.
     
     Returns given address, port and user.
@@ -89,7 +169,7 @@ def parse_client_args(args):
     parser.add_argument('-u', '--user', dest="user", required=True, type=str)
     return parser.parse_args()
 
-def parse_server_args(args):
+def parse_server_args():
     """Parse server command line arguments.
 
     Returns given address and port.

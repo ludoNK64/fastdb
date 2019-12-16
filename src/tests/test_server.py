@@ -30,7 +30,7 @@ class TestServer(unittest.TestCase):
         _server.create_tables()
 
         # Check if 'ludo' user exists
-        self.assertFalse(_server.is_user_exist('ludo'))
+        self.assertFalse(_server.is_user_exist('ludo', 'ludo'))
         # Check if 'tweet' table exists
         self.assertFalse(_server.is_database_exist('tweet'))
 

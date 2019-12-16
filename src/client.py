@@ -6,19 +6,10 @@
 import socket 
 import getpass 
 import datetime 
+import re 
 
 import utils
-
-
-CLIENT_PROMPT = "fastdb> "
-CLIENT_APP_NAME = "FastDB"
-CLIENT_APP_VERSION = "1.0.1"
-ERRORS = {
-    'invalid-statement': "Invalid SQL syntax at line 1"
-}
-DATA_SEPARATOR = '$'
-HELP_FILE = 'help'
-
+from config import *
 
 class LoginError(Exception):
     pass
@@ -65,6 +56,19 @@ class FDB_Client:
         if data.decode(encoding="utf-8") != 'ok':
             raise LoginError("Invalid username or password!")
 
+    def find_custom_statement(self, entry:str) -> bytes:
+        """Try to find a specific statement for user or database.
+
+        If the entry is a custom statement, return the entry associated
+        to the key found in the STATEMENTS dict.
+        """
+        data = b''
+        for key, pattern in STATEMENTS.items():
+            if re.fullmatch(pattern, entry, re.IGNORECASE | re.VERBOSE) is not None:
+                data = bytes(key + DATA_SEPARATOR + entry, encoding="utf-8")
+                break 
+        return data 
+
     def run(self):
         """Application main loop."""
         try:
@@ -84,12 +88,16 @@ class FDB_Client:
                         cls.help()
                     else: pass
                 else:
-                    self.checker.update(entry)
-                    if self.checker.is_valid_statement():
-                        self.send_data(self.checker.sql_to_bytes())
-                        self.print_results()
-                    else:
-                        print(ERRORS['invalid-statement'])
+                    data = self.find_custom_statement(entry)
+                    if not data:
+                        self.checker.update(entry)
+                        if self.checker.is_valid_statement():
+                            data = self.checker.sql_to_bytes()
+                        else:
+                            print(f"\nERROR: {ERROR['invalid-statement']}\n")
+                            continue
+                    self.send_data(data)
+                    self.print_results()
             print("\nBye\n")
         finally:
             self.close_connection()
@@ -109,7 +117,7 @@ class FDB_Client:
     def help(cls):
         """Show client help"""
         print("\n********************* HELP **********************\n")
-        print("This is the help you ask for. Read this carefully!")
+        print("This is the help you asked for. Read this carefully!")
         try:
             with open(HELP_FILE, 'r') as _file:
                 print(_file.read())
@@ -122,8 +130,7 @@ class FDB_Client:
 
 # main
 if __name__ == '__main__':
-    import sys
-    args = utils.parse_client_args(sys.argv[1:])
+    args = utils.parse_client_args()
     if utils.is_valid_ip(args.host):
         client = FDB_Client(args.user, args.host, args.port)
         client.run()

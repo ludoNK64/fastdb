@@ -10,12 +10,7 @@ import time
 
 import utils
 from session import ClientSession 
-
-DEFAULT_HOST = 'localhost'
-DEFAULT_PORT = 5100
-SERVER_DATABASE = 'fastdb_info.db'
-LOG_FILE = 'log.txt'
-
+from config import *
 
 class FDB_Server:
     def __init__(self, host:str, port:int):
@@ -26,6 +21,7 @@ class FDB_Server:
         self._logger = utils.Logger(LOG_FILE) 
         self._nb_clients = 0
         self.tables = {'users': 'users', 'databases': 'databases'}
+        self._info_dbname = 'fastdb_info'
 
     @property
     def host(self):
@@ -63,22 +59,44 @@ class FDB_Server:
         if self._db_conn:
             with self._db_conn:
                 cursor = self._db_conn.cursor()
-                cursor.execute('SELECT dbname FROM %s WHERE dbname=?' % 
+                cursor.execute('SELECT dbname FROM %s WHERE dbname=?' % \
                     self.tables['databases'], (dbname,))
                 return cursor.fetchone() is not None 
         return False 
 
     def insert_new_user(self, username:str, password:str):
-        pass
+        sql = "INSERT INTO %s (username, password) VALUES(?, ?)" % \
+            self.tables['users']
+        with self.db_conn:
+            password = utils.hash_password('sha512', password)
+            self.db_conn.execute(sql, (username, password))
+            self.db_conn.commit()
 
     def delete_user(self, username:str):
-        pass
+        sql = "DELETE FROM %s WHERE username = ?" % self.tables['users']
+        with self.db_conn:
+            self.db_conn.execute(sql, (username,))
+            self.db_conn.commit()
 
     def insert_new_database(self, dbname:str):
-        pass
+        sql = "INSERT INTO %s(dbname) VALUES(?)" % self.tables['databases']
+        with self.db_conn:
+            self.db_conn.execute(sql, (dbname,))
+            self.db_conn.commit()
 
     def delete_database_entry(self, dbname:str):
-        pass 
+        sql = "DELETE FROM %s WHERE dbname = ?" % self.tables['databases']
+        with self.db_conn:
+            self.db_conn.execute(sql, (dbname,))
+            self.db_conn.commit() 
+
+    def select_databases(self) -> list:
+        """Select all databases entries."""
+        results = []
+        if self.db_conn:
+            sql = "SELECT * FROM %s" % self.tables['databases']
+            results = self.db_conn.execute(sql).fetchall()
+        return results 
 
     def create_tables(self):
         """Create server tables if not already exist."""
@@ -99,6 +117,8 @@ class FDB_Server:
                 );""" % self.tables['databases'])
             self._db_conn.execute(sql[0])
             self._db_conn.execute(sql[1])
+            sql = "INSERT INTO %s(dbname) VALUES(?)" % self.tables['databases']
+            self.db_conn.execute(sql, (self._info_dbname,))
             self._db_conn.commit()
 
     def connect_to_database(self):
@@ -161,8 +181,7 @@ class FDB_Server:
             self.close_socket()
 
 if __name__ == '__main__':
-    import sys
-    args = utils.parse_server_args(sys.argv[1:])
+    args = utils.parse_server_args()
     if utils.is_valid_ip(args.host):
         server = FDB_Server(args.host, args.port)
         server.run()

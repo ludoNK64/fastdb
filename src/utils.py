@@ -157,7 +157,7 @@ def hash_password(algo:str, data:str):
     else:
         return None
 
-def parse_client_args(args):
+def parse_client_args():
     """Parse client command line arguments.
     
     Returns given address, port and user.
@@ -169,7 +169,7 @@ def parse_client_args(args):
     parser.add_argument('-u', '--user', dest="user", required=True, type=str)
     return parser.parse_args()
 
-def parse_server_args(args):
+def parse_server_args():
     """Parse server command line arguments.
 
     Returns given address and port.

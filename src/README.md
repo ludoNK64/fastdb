@@ -8,8 +8,8 @@ A simple client-server relational database management system written in Python u
 python3 server.py --addr=ADDRESS --port=PORT
 ```
 
-```ADDRESS``` is the IP address of the server host
-```PORT```	  is the port to use
+```ADDRESS``` is the IP address of the server host.
+```PORT```	  is the port to use.
 
 - Next, you need to run the client via this command:
 ```
